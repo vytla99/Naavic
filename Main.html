@@ -1,0 +1,497 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>Main</title><meta name="generator" content="MATLAB 8.5"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2019-07-01"><meta name="DC.source" content="Main.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput">clc;
+clear <span class="string">all</span>;
+close <span class="string">all</span>;
+format <span class="string">long</span> <span class="string">g</span>;
+Satellite_PRN_ID=input(<span class="string">'Enter the PRN ID of the Satellite to be considered.'</span>);
+settings = setting_canshu();
+loop_para = loop_canshu_calculate(settings);
+code_table=GOLD_code(Satellite_PRN_ID);
+
+fll_nco_adder = 0;
+carrier_nco_sum = 0;
+pll_nco_adder = 0;
+loop_count = 0;
+code_nco_sum = 0;
+code_nco_adder = 0;
+n_IQ = 2;
+n = 3;
+output_fll(2:3) = 0;
+output_filter_fll(1:3) = 0;
+output_filter_pll(1:3) = 0;
+output_pll(2:3) = 0;
+output_filter_ddll(1:3) = 0;
+pll_after_filter = 0;
+
+Tcoh = settings.Tcoh;
+
+<span class="keyword">global</span> modulate_code_nco;
+modulate_code_nco = settings.modulate_code_bias_phsae;
+<span class="keyword">global</span> early_code_nco;
+<span class="comment">% early_code_nco = setting.e_code_original_phase;</span>
+
+local_early_code_last = local_earlycode_initial(settings,code_table);
+
+<span class="keyword">for</span> loop_num = 1 : 1500
+    signal_original = source_(settings);
+    settings.dot_length = settings.dot_length + 10000;
+    flag(loop_num) = settings.PLL_flag;
+    fd_plot(loop_num) = settings.dup_freq;
+
+    [signal_modulate_code,settings.signal_phase] = signalcode(settings,code_table);
+    receive_signal = signal_modulate_code.* signal_original;
+
+
+<span class="comment">%     receive_signal =  original_signal;</span>
+    <span class="keyword">for</span> demond_num = 1:settings.Ncoh
+        local_cos(demond_num) = cos(2*pi*carrier_nco_sum/2^settings.nco_Length);
+        local_sin(demond_num) = -sin(2*pi*carrier_nco_sum/2^settings.nco_Length);
+        carrier_nco_sum = carrier_nco_sum + settings.middle_freq_nco + fll_nco_adder + pll_nco_adder ;
+<span class="comment">%         carrier_nco_sum = mod(carrier_nco_sum,2^setting.nco_Length);</span>
+    <span class="keyword">end</span>,
+
+    code_nco_sum = code_nco_adder + settings.code_word + fll_nco_adder*settings.cofe_FLL_auxi_DDLL;
+    <span class="comment">%code_nco_sum = code_nco_adder + settings.code_word + fll_nco_adder*(1/763);</span>
+
+    [local_early_code,local_prompt_code,local_late_code,settings.local_phase]=localcode_generate(local_early_code_last,code_nco_sum,code_table,settings);
+    local_early_code_last = local_early_code;
+
+    I_demon_carrier = local_cos.*receive_signal;
+    Q_demon_carrier = local_sin.*receive_signal;
+<span class="comment">%     save_I_demon_carrier = [save_I_demon_carrier I_demon_carrier];</span>
+<span class="comment">%     save_Q_demon_carrier = [save_Q_demon_carrier Q_demon_carrier];</span>
+
+
+    I_E_final = sum(I_demon_carrier.*local_early_code);
+    Q_E_final = sum(Q_demon_carrier.*local_early_code);
+    I_P_final(n_IQ) = sum(I_demon_carrier.*local_prompt_code);
+    Q_P_final(n_IQ) = sum(Q_demon_carrier.*local_prompt_code);
+    I_L_final = sum(I_demon_carrier.*local_late_code);
+    Q_L_final = sum(Q_demon_carrier.*local_late_code);
+
+
+<span class="comment">%     I_P_final(n_IQ) = sum(I_demon_carrier);</span>
+<span class="comment">%     Q_P_final(n_IQ) = sum(Q_demon_carrier);</span>
+
+
+    <span class="keyword">if</span>  1 == loop_num
+        I_P_final(n_IQ - 1) = I_P_final(n_IQ);
+        Q_P_final(n_IQ - 1) = Q_P_final(n_IQ);
+    <span class="keyword">else</span>
+<span class="comment">% %</span>
+        dot_fll = I_P_final(n_IQ - 1) * I_P_final(n_IQ) + Q_P_final(n_IQ - 1) * Q_P_final(n_IQ);
+        cross_fll = I_P_final(n_IQ - 1) * Q_P_final(n_IQ) - I_P_final(n_IQ) * Q_P_final(n_IQ - 1);
+        output_fll(n) = atan2(cross_fll,dot_fll)/(Tcoh*2*pi);
+        result_discriminator_Fll(loop_num) = output_fll(n);
+
+        output_filter_fll(n) = (loop_para.cofeone_FLL * output_fll(n)) + (loop_para.cofetwo_FLL * output_fll(n - 1)) + (2 * output_filter_fll(n - 1)) - output_filter_fll(n - 2);
+        fll_after_filter(loop_num) = output_filter_fll(n);
+
+        fll_nco_adder = output_filter_fll(n) * settings.transfer_coef ;
+        output_fll(n - 1)=output_fll(n);
+        output_filter_fll(n - 2)=output_filter_fll(n - 1);
+        output_filter_fll(n - 1)=output_filter_fll(n);
+
+         <span class="keyword">if</span> settings.PLL_flag == 1
+
+            output_pll(n) = atan2(Q_P_final(n_IQ),I_P_final(n_IQ));
+            output_filter_pll(n) = loop_para.cofeone_PLL*output_pll(n) + loop_para.cofetwo_PLL*output_pll(n-1)+loop_para.cofethree_PLL*output_pll(n-2)+2*output_filter_pll(n-1)-output_filter_pll(n-2);
+            result_discriminator_Pll(loop_num) = output_pll(n);
+            pll_after_filter(loop_num) = output_filter_pll(n);
+            pll_nco_adder = (output_filter_pll(n)/(2*pi)) * settings.transfer_coef;
+
+<span class="comment">%             output_pll(1:2) = output_pll(2:3);</span>
+<span class="comment">%             output_filter_pll(1:2) = output_filter_pll(2:3);</span>
+            output_pll(n-2) = output_pll(n-1);
+            output_pll(n-1) = output_pll(n);
+            output_filter_pll(n-2) = output_filter_pll(n-1);
+            output_filter_pll(n-1) = output_filter_pll(n);
+        <span class="keyword">end</span>
+
+        I_P_final(n_IQ - 1) = I_P_final(n_IQ);
+        Q_P_final(n_IQ - 1) = Q_P_final(n_IQ);
+       <span class="keyword">if</span> 0 == settings.PLL_flag  &amp;&amp; abs(output_fll(n))&lt;10
+            loop_count = loop_count + 1;
+            <span class="keyword">if</span>  loop_count&gt;200
+                   settings.PLL_flag = 1;
+            <span class="keyword">end</span>
+       <span class="keyword">elseif</span>  1 == settings.PLL_flag &amp;&amp; abs(output_fll(n))&gt;30
+            loop_count = loop_count-1;
+            <span class="keyword">if</span>  0 == loop_count
+                settings.PLL_flag = 0;
+            <span class="keyword">end</span>
+       <span class="keyword">end</span>
+    <span class="keyword">end</span>,
+
+    output_ddll(n) = ((I_E_final - I_L_final)*I_P_final(n_IQ) + (Q_E_final - Q_L_final)*Q_P_final(n_IQ) )/((I_P_final(n_IQ)^2 + Q_P_final(n_IQ)^2)*2);  <span class="comment">% DDLL_discri_1</span>
+
+    result_ddll(loop_num) = output_ddll(n);
+
+    output_filter_ddll(n) = output_filter_ddll(n -1) + (loop_para.cofeone_DDLL*output_ddll(n)) + loop_para.cofetwo_DDLL*output_ddll(n - 1);
+    result_DDLL_filter(loop_num) = output_filter_ddll(n);
+
+    code_nco_adder = output_filter_ddll(n) * settings.transfer_coef ;
+<span class="comment">%     Code_NCO=0;</span>
+<span class="comment">%     C(loop_num)=code_nco_adder;</span>
+
+    output_ddll(n - 1)=output_ddll(n);
+    output_filter_ddll(n - 1) = output_filter_ddll(n);
+    code_phase_discrim(loop_num) = settings.signal_phase - settings.local_phase ;
+<span class="keyword">end</span>
+
+figure ;
+subplot(2,1,1);
+plot(flag);
+title(<span class="string">'FLL+PLL'</span>);
+legend(<span class="string">'PLL Output'</span>);
+xlabel(<span class="string">'Time(micro-second)'</span>)
+subplot(2,1,2);
+plot(fll_after_filter + (pll_after_filter/(2*pi)),<span class="string">'b'</span>);
+hold <span class="string">on</span>;
+plot(fd_plot,<span class="string">'r'</span>);
+legend(<span class="string">'FLL after Fliter'</span>,<span class="string">'PLL after Filter/(2*pi)'</span>);
+xlabel(<span class="string">'Time(micro-second)'</span>)
+
+figure ;
+subplot(2,1,1);
+plot(result_ddll);
+title(<span class="string">'FLL+PLL'</span>);
+legend(<span class="string">'DLL output'</span>);
+xlabel(<span class="string">'Time(micro-second)'</span>)
+subplot(2,1,2);
+plot(result_DDLL_filter,<span class="string">'b'</span>);
+hold <span class="string">on</span>;
+ plot(fd_plot,<span class="string">'r'</span>);<span class="comment">%</span>
+ legend(<span class="string">'Result DLL using FILTER'</span>,<span class="string">''</span>);
+legend(<span class="string">'DLL using FILTER '</span>);
+xlabel(<span class="string">'Time(micro-second)'</span>)
+
+ figure ;
+ subplot(2,1,1);
+ plot(result_discriminator_Fll);
+ title(<span class="string">'FLL'</span>);
+ legend(<span class="string">'PLL'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>)
+ subplot(2,1,2);
+ plot(fll_after_filter,<span class="string">'b'</span>);
+ hold <span class="string">on</span>;
+ plot(fd_plot,<span class="string">'r'</span>);
+ legend(<span class="string">'FLL after FILTER'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>)
+
+ figure ;
+ subplot(2,1,1);
+ plot(result_discriminator_Pll);
+ title(<span class="string">'PLL'</span>);
+ legend(<span class="string">'PLL output'</span>);
+ xlabel(<span class="string">'Time(micro-second)?'</span>)
+ subplot(2,1,2);
+ plot((pll_after_filter/(2*pi)),<span class="string">'b'</span>);
+ hold <span class="string">on</span>;
+ plot(fd_plot,<span class="string">'r'</span>);
+ legend(<span class="string">'PLL output using FILTER'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>)
+ figure ;
+ subplot(2,2,1);
+ plot(result_discriminator_Fll);
+ ylabel(<span class="string">'FLL Output'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>)
+ subplot(2,2,2);
+ plot(fll_after_filter + (pll_after_filter/(2*pi)));
+ ylabel(<span class="string">'FLL FILTER+(PLL FILTER)/(2*pi)'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>)
+ subplot(2,2,3);
+ plot( flag);
+ ylabel(<span class="string">'PLL Output'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>)
+ subplot(2,2,4);
+ plot( fll_after_filter);
+ ylabel(<span class="string">' FLL Output'</span>);
+ xlabel(<span class="string">'Time(micro-second)'</span>);
+ disp(<span class="string">'Respective Outputs Have been Generated'</span>);
+</pre><pre class="codeoutput error">Error using input
+Cannot call INPUT from EVALC.
+
+Error in Main (line 5)
+Satellite_PRN_ID=input('Enter the PRN ID of the Satellite to be considered.');
+</pre><p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015a</a><br></p></div><!--
+##### SOURCE BEGIN #####
+clc;
+clear all;
+close all;
+format long g;
+Satellite_PRN_ID=input('Enter the PRN ID of the Satellite to be considered.');
+settings = setting_canshu();
+loop_para = loop_canshu_calculate(settings);
+code_table=GOLD_code(Satellite_PRN_ID); 
+
+fll_nco_adder = 0;
+carrier_nco_sum = 0;
+pll_nco_adder = 0;
+loop_count = 0;
+code_nco_sum = 0;
+code_nco_adder = 0;
+n_IQ = 2;
+n = 3;
+output_fll(2:3) = 0;
+output_filter_fll(1:3) = 0;
+output_filter_pll(1:3) = 0;
+output_pll(2:3) = 0;
+output_filter_ddll(1:3) = 0;
+pll_after_filter = 0;
+
+Tcoh = settings.Tcoh;
+
+global modulate_code_nco; 
+modulate_code_nco = settings.modulate_code_bias_phsae;
+global early_code_nco;
+% early_code_nco = setting.e_code_original_phase;
+
+local_early_code_last = local_earlycode_initial(settings,code_table);
+
+for loop_num = 1 : 1500
+    signal_original = source_(settings); 
+    settings.dot_length = settings.dot_length + 10000;
+    flag(loop_num) = settings.PLL_flag;
+    fd_plot(loop_num) = settings.dup_freq;
+    
+    [signal_modulate_code,settings.signal_phase] = signalcode(settings,code_table);
+    receive_signal = signal_modulate_code.* signal_original; 
+
+
+%     receive_signal =  original_signal;  
+    for demond_num = 1:settings.Ncoh 
+        local_cos(demond_num) = cos(2*pi*carrier_nco_sum/2^settings.nco_Length);
+        local_sin(demond_num) = -sin(2*pi*carrier_nco_sum/2^settings.nco_Length);
+        carrier_nco_sum = carrier_nco_sum + settings.middle_freq_nco + fll_nco_adder + pll_nco_adder ;
+%         carrier_nco_sum = mod(carrier_nco_sum,2^setting.nco_Length);
+    end,
+    
+    code_nco_sum = code_nco_adder + settings.code_word + fll_nco_adder*settings.cofe_FLL_auxi_DDLL; 
+    %code_nco_sum = code_nco_adder + settings.code_word + fll_nco_adder*(1/763);   
+  
+    [local_early_code,local_prompt_code,local_late_code,settings.local_phase]=localcode_generate(local_early_code_last,code_nco_sum,code_table,settings);
+    local_early_code_last = local_early_code;
+     
+    I_demon_carrier = local_cos.*receive_signal;
+    Q_demon_carrier = local_sin.*receive_signal;
+%     save_I_demon_carrier = [save_I_demon_carrier I_demon_carrier];
+%     save_Q_demon_carrier = [save_Q_demon_carrier Q_demon_carrier];
+    
+   
+    I_E_final = sum(I_demon_carrier.*local_early_code);
+    Q_E_final = sum(Q_demon_carrier.*local_early_code);
+    I_P_final(n_IQ) = sum(I_demon_carrier.*local_prompt_code);
+    Q_P_final(n_IQ) = sum(Q_demon_carrier.*local_prompt_code);
+    I_L_final = sum(I_demon_carrier.*local_late_code);
+    Q_L_final = sum(Q_demon_carrier.*local_late_code);
+    
+    
+%     I_P_final(n_IQ) = sum(I_demon_carrier);
+%     Q_P_final(n_IQ) = sum(Q_demon_carrier);
+    
+    
+    if  1 == loop_num
+        I_P_final(n_IQ - 1) = I_P_final(n_IQ);
+        Q_P_final(n_IQ - 1) = Q_P_final(n_IQ);
+    else
+% %  
+        dot_fll = I_P_final(n_IQ - 1) * I_P_final(n_IQ) + Q_P_final(n_IQ - 1) * Q_P_final(n_IQ);
+        cross_fll = I_P_final(n_IQ - 1) * Q_P_final(n_IQ) - I_P_final(n_IQ) * Q_P_final(n_IQ - 1);
+        output_fll(n) = atan2(cross_fll,dot_fll)/(Tcoh*2*pi); 
+        result_discriminator_Fll(loop_num) = output_fll(n);
+        
+        output_filter_fll(n) = (loop_para.cofeone_FLL * output_fll(n)) + (loop_para.cofetwo_FLL * output_fll(n - 1)) + (2 * output_filter_fll(n - 1)) - output_filter_fll(n - 2);
+        fll_after_filter(loop_num) = output_filter_fll(n);
+        
+        fll_nco_adder = output_filter_fll(n) * settings.transfer_coef ;  
+        output_fll(n - 1)=output_fll(n);
+        output_filter_fll(n - 2)=output_filter_fll(n - 1);
+        output_filter_fll(n - 1)=output_filter_fll(n);
+        
+         if settings.PLL_flag == 1
+            
+            output_pll(n) = atan2(Q_P_final(n_IQ),I_P_final(n_IQ)); 
+            output_filter_pll(n) = loop_para.cofeone_PLL*output_pll(n) + loop_para.cofetwo_PLL*output_pll(n-1)+loop_para.cofethree_PLL*output_pll(n-2)+2*output_filter_pll(n-1)-output_filter_pll(n-2);
+            result_discriminator_Pll(loop_num) = output_pll(n);
+            pll_after_filter(loop_num) = output_filter_pll(n);
+            pll_nco_adder = (output_filter_pll(n)/(2*pi)) * settings.transfer_coef;  
+            
+%             output_pll(1:2) = output_pll(2:3);
+%             output_filter_pll(1:2) = output_filter_pll(2:3);
+            output_pll(n-2) = output_pll(n-1);
+            output_pll(n-1) = output_pll(n);
+            output_filter_pll(n-2) = output_filter_pll(n-1);
+            output_filter_pll(n-1) = output_filter_pll(n);
+        end
+
+        I_P_final(n_IQ - 1) = I_P_final(n_IQ);
+        Q_P_final(n_IQ - 1) = Q_P_final(n_IQ);
+       if 0 == settings.PLL_flag  && abs(output_fll(n))<10 
+            loop_count = loop_count + 1;
+            if  loop_count>200            
+                   settings.PLL_flag = 1;
+            end
+       elseif  1 == settings.PLL_flag && abs(output_fll(n))>30
+            loop_count = loop_count-1;
+            if  0 == loop_count
+                settings.PLL_flag = 0;
+            end
+       end
+    end,
+
+    output_ddll(n) = ((I_E_final - I_L_final)*I_P_final(n_IQ) + (Q_E_final - Q_L_final)*Q_P_final(n_IQ) )/((I_P_final(n_IQ)^2 + Q_P_final(n_IQ)^2)*2);  % DDLL_discri_1
+       
+    result_ddll(loop_num) = output_ddll(n);
+
+    output_filter_ddll(n) = output_filter_ddll(n -1) + (loop_para.cofeone_DDLL*output_ddll(n)) + loop_para.cofetwo_DDLL*output_ddll(n - 1);
+    result_DDLL_filter(loop_num) = output_filter_ddll(n);
+
+    code_nco_adder = output_filter_ddll(n) * settings.transfer_coef ; 
+%     Code_NCO=0;
+%     C(loop_num)=code_nco_adder;
+
+    output_ddll(n - 1)=output_ddll(n);
+    output_filter_ddll(n - 1) = output_filter_ddll(n);
+    code_phase_discrim(loop_num) = settings.signal_phase - settings.local_phase ;
+end
+
+figure ;
+subplot(2,1,1);
+plot(flag);
+title('FLL+PLL');
+legend('PLL Output');
+xlabel('Time(micro-second)')
+subplot(2,1,2);
+plot(fll_after_filter + (pll_after_filter/(2*pi)),'b');
+hold on;
+plot(fd_plot,'r');
+legend('FLL after Fliter','PLL after Filter/(2*pi)');
+xlabel('Time(micro-second)')
+
+figure ;
+subplot(2,1,1);
+plot(result_ddll);
+title('FLL+PLL');
+legend('DLL output');
+xlabel('Time(micro-second)')
+subplot(2,1,2);
+plot(result_DDLL_filter,'b');
+hold on;
+ plot(fd_plot,'r');%
+ legend('Result DLL using FILTER','');
+legend('DLL using FILTER ');
+xlabel('Time(micro-second)')
+
+ figure ;
+ subplot(2,1,1);
+ plot(result_discriminator_Fll);
+ title('FLL');
+ legend('PLL');
+ xlabel('Time(micro-second)')
+ subplot(2,1,2);
+ plot(fll_after_filter,'b');
+ hold on;
+ plot(fd_plot,'r');
+ legend('FLL after FILTER');
+ xlabel('Time(micro-second)')
+ 
+ figure ;
+ subplot(2,1,1);
+ plot(result_discriminator_Pll);
+ title('PLL');
+ legend('PLL output');
+ xlabel('Time(micro-second)?')
+ subplot(2,1,2);
+ plot((pll_after_filter/(2*pi)),'b');
+ hold on;
+ plot(fd_plot,'r');
+ legend('PLL output using FILTER');
+ xlabel('Time(micro-second)')
+ figure ;
+ subplot(2,2,1);
+ plot(result_discriminator_Fll);
+ ylabel('FLL Output');
+ xlabel('Time(micro-second)')
+ subplot(2,2,2);
+ plot(fll_after_filter + (pll_after_filter/(2*pi)));
+ ylabel('FLL FILTER+(PLL FILTER)/(2*pi)');
+ xlabel('Time(micro-second)')
+ subplot(2,2,3);
+ plot( flag);
+ ylabel('PLL Output');
+ xlabel('Time(micro-second)')
+ subplot(2,2,4);
+ plot( fll_after_filter);
+ ylabel(' FLL Output');
+ xlabel('Time(micro-second)');
+ disp('Respective Outputs Have been Generated');
+##### SOURCE END #####
+--></body></html>
