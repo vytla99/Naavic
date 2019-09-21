@@ -1,2 +1,2 @@
-# Silizium
+# Naavic
 Electronic and communication projects
