@@ -1,2 +1,2 @@
 # Naavic
-Electronic and communication projects
+MatLab simulations of IRNSS signals.
