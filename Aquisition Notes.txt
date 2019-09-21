@@ -1,0 +1,6 @@
+CA code is 1ms long
+DATA Empheresis data is 20ms long
+CA code is 1023*10e3 chips per second, DATA is 50 bps.
+ Navigation Data length is 20ca code long i.e 20ms long.
+
+Reciever Arcietecture: https://www.youtube.com/watch?v=GUk7ZhFMp3k&list=PLGvhNIiu1ubyEOJga50LJMzVXtbUq6CPo&index=37
